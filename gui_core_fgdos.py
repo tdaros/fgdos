@@ -88,10 +88,10 @@ def set_plot(self):
     self.timerPlot.start(sampleTime_period)
 
 def update_adc_measurement(self):
-    if self.fgdos.get_status() and not self.measurement_running and self.progressBarDatalog.value() == 0:
+    # Check if fgdos is available before attempting measurement
+    if self.fgdos and self.fgdos.get_status() and not self.measurement_running and self.progressBarDatalog.value() == 0:
         self.measurement_running = True
-        status, data = self.fgdos.get_measurement_voltage()
-        timestamp = self.fgdos.get_timestamp() / 1e6
+        status, data, timestamp = self.fgdos.get_measurement_voltage() # Get status, data, and timestamp from fgdos
         self.measurement_running = False
         return status, data, timestamp
     else:
@@ -102,14 +102,24 @@ def update_plot(self, status=None, data=None, timestamp=None):
     # if self.progressBarDatalog.value() > 0:
     #     self.unset_plot()
         
+    # Get measurement data and timestamp
     status, data, timestamp = self.update_adc_measurement()
-    if not status:
+
+    # Only update plot if measurement was successful and data/timestamp are valid
+    if not status and data is not None and timestamp is not None:
         try:
             self.data_buffer.append(data)
             self.x_values.append(timestamp)
             self.line.set_data(self.x_values, self.data_buffer)
+
+            # Update plot limits
             self.ax.relim()
             self.ax.autoscale_view()
+            # Ensure data_buffer is not empty before calculating min/max
+            if self.data_buffer:
+                ymax = max(self.data_buffer)
+                ymin =  min(self.data_buffer)
+                # Add a small margin, but handle case where ymax == ymin
             ymax = max(self.data_buffer)
             ymin =  min(self.data_buffer)
             self.ax.set_ylim([ymin / 1.05 , ymax * 1.05])
@@ -117,10 +127,18 @@ def update_plot(self, status=None, data=None, timestamp=None):
             self.app.processEvents()
         except ValueError:
             print("Invalid data:", data)
-            print(type(data))
+            print(f"Invalid data or plotting error: {e}")
+            print("Data:", data, "Timestamp:", timestamp)
+            # print(type(data)) # Already in original code
+        except Exception as e:
+            print(f"An unexpected error occurred during plot update: {e}")
     # else:
     #     print("No data received.")
-    
+    # This else block is commented out in the original code.
+    # If status is True (error), the plot is simply not updated, which is fine.
+    # If status is False but data/timestamp are None (shouldn't happen if status is False),
+    # the plot is also not updated.
+
             
 
 

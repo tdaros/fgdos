@@ -158,6 +158,10 @@ class MainWindow(QMainWindow):
         self.spinMedianWindow.setValue(3) # Default
         self.horLaySetADC.addWidget(self.spinMedianWindow)
 
+        self.checkAnalogDiscovery = QCheckBox(self.mainFrame)
+        self.checkAnalogDiscovery.setObjectName(u"checkAnalogDiscovery")
+        self.horLaySetADC.addWidget(self.checkAnalogDiscovery)
+
         # Initially disable window spinbox if filter is off
         self.labelMedianWindow.setEnabled(False)
         self.spinMedianWindow.setEnabled(False)
@@ -491,6 +495,8 @@ class MainWindow(QMainWindow):
         self.buttonDisableFeedback.clicked.connect(lambda: self.fgdos.disable_feedback())
 
         self.checkMedianFilter.stateChanged.connect(self.handle_median_filter_toggle)
+        self.checkAnalogDiscovery.stateChanged.connect(self.handle_analog_discovery_toggle)
+
         self.spinMedianWindow.valueChanged.connect(self.handle_median_window_changed)
         # self.spinSensor.valueChanged.connect(self.fgdos.set_voltage())
 
@@ -507,6 +513,16 @@ class MainWindow(QMainWindow):
         if self.fgdos:
             self.fgdos.set_median_filter_enabled(is_enabled)
         self.labelMedianWindow.setEnabled(is_enabled)
+        self.spinMedianWindow.setEnabled(is_enabled)
+
+    def handle_analog_discovery_toggle(self, state):
+        is_enabled = bool(state)
+        if self.fgdos:
+            self.fgdos.set_use_analog_discovery(is_enabled)
+            # Optional: Provide feedback to the user
+            status_msg = "Analog Discovery measurement enabled" if is_enabled else "Internal ADC measurement enabled"
+            self.statusbar.showMessage(status_msg)
+            self.timer.singleShot(3000, self.clear_message) # Clear message after 3 seconds
         self.spinMedianWindow.setEnabled(is_enabled)
 
     def handle_median_window_changed(self, value):
@@ -536,7 +552,7 @@ class MainWindow(QMainWindow):
         self.checkMedianFilter.setText(QCoreApplication.translate("MainWindow", u"Median Filter", None))
         self.labelMedianWindow.setText(QCoreApplication.translate("MainWindow", u"Window:", None))
         self.spinMedianWindow.setSuffix(QCoreApplication.translate("MainWindow", u" samples", None))
-
+        self.checkAnalogDiscovery.setText(QCoreApplication.translate("MainWindow", u"Use Analog Discovery for Measurement", None))
 
 
         self.resetSensor.setText(_translate("MainWindow", "Reset Sensor"))
