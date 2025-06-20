@@ -1,5 +1,7 @@
 from fgdosInterface import fgdosInterface
 import time
+import collections
+import numpy as np
 
 MAX_VINJ = 12
 MIN_VINJ = -12
@@ -9,12 +11,19 @@ MIN_VREF = 0
 
 VMS_CHANNEL = 15
 
+DEFAULT_MEDIAN_FILTER_WINDOW_SIZE = 3
+MAX_MEDIAN_FILTER_WINDOW_SIZE = 11 # Maxlen for the raw_adc_buffer
+
 class fgdosProcedure(fgdosInterface):
     def __init__(self, debug_mode=False, device='COM5', spinbox_sensor=None, spinbox_metalshield=None, update_plot=None, update_gui=None):
         super().__init__(debug_mode, device)
         self.offset_time = self.pico.tick()[1]
         self.spinbox_sensor = spinbox_sensor
         self.spinbox_metalshield = spinbox_metalshield
+        self.median_filter_enabled = False
+        self.median_filter_window_size = DEFAULT_MEDIAN_FILTER_WINDOW_SIZE
+        # Buffer to store raw ADC readings for median filtering
+        self.raw_adc_buffer = collections.deque(maxlen=MAX_MEDIAN_FILTER_WINDOW_SIZE)
         self.update_plot = update_plot
         self.update_gui = update_gui
 
@@ -49,14 +58,46 @@ class fgdosProcedure(fgdosInterface):
         self.set_enable_input(0)
         assert -12 <= voltage <= 12, "Invalid voltage"
         self.set_voltage(voltage, "vinj")
-        self.input_channel_select(VMS_CHANNEL)
+        self.input_channel_select(VMS_CHANNEL) # VMS_CHANNEL is 15
         self.set_enable_input(1)
         
-    def get_measurement_voltage(self, n_samples_mean=1) -> float:
-        status, _, reading = self.get_measurement()
-        if not status:
-            value_scaled = reading * 3.3 / 4095
-            return status, value_scaled
+    def set_median_filter_enabled(self, enabled: bool):
+        self.median_filter_enabled = enabled
+        if not enabled:
+            self.raw_adc_buffer.clear() # Clear buffer when disabling
+        # print(f"Median filter {'enabled' if enabled else 'disabled'}")
+
+    def set_median_filter_window_size(self, size: int):
+        if 3 <= size <= MAX_MEDIAN_FILTER_WINDOW_SIZE and size % 2 == 1: # Ensure odd and within bounds
+            self.median_filter_window_size = size
+            # self.raw_adc_buffer = collections.deque(maxlen=size) # Re-create buffer if window size changes maxlen
+            # print(f"Median filter window size set to: {size}")
+        else:
+            print(f"Invalid median filter window size: {size}. Must be odd and between 3 and {MAX_MEDIAN_FILTER_WINDOW_SIZE}.")
+
+    def get_measurement_voltage(self, n_samples_mean=1):
+        # pico.adc_read returns (status, value, reading_raw)
+        # where status=0 is success.
+        timestamp_us = self.pico.tick()[1] # Get timestamp *before* ADC read
+        adc_status, _, reading_raw = self.get_measurement() # ADC_IN is 28, so this reads ADC 2
+        timestamp_s = (timestamp_us - self.offset_time) / 1e6
+        if adc_status == 0: # Success from ADC
+            self.raw_adc_buffer.append(reading_raw)
+            if self.median_filter_enabled and len(self.raw_adc_buffer) >= self.median_filter_window_size:
+                # Apply median filter
+                window_data = list(self.raw_adc_buffer)[-self.median_filter_window_size:]
+                filtered_raw_value = np.median(window_data)
+                # print(f"[DEBUG fgdosProc] TS={timestamp_s:.3f}s, Raw ADC: {reading_raw}, Filtered Raw: {filtered_raw_value:.0f} (Window: {self.median_filter_window_size})")
+                value_scaled = filtered_raw_value * 3.3 / 4095
+            else:
+                # No filter or buffer not full enough
+                # print(f"[DEBUG fgdosProc] TS={timestamp_s:.3f}s, Raw ADC: status={adc_status}, reading_raw={reading_raw} (No filter)")
+                value_scaled = reading_raw * 3.3 / 4095
+            return False, value_scaled # Overall status is False (no error from this func), data is value_scaled, timestamp is handled by gui_core_fgdos
+        else: # Error from ADC
+            # print(f"[DEBUG fgdosProc] ADC Error: status={adc_status}")
+            return True, None # Overall status is True (error from this func), data is None
+
 
         
     def check_integrity(self) -> bool:
@@ -174,4 +215,3 @@ class fgdosProcedure(fgdosInterface):
         self.set_output_feedback(0)
         self.set_enable_feedback_channel(0)
         self.set_enable_feedback_buffer(0)
-

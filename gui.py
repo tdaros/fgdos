@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QAbstractItemView,
+    QCheckBox,
     QListView,
 )
 
@@ -140,6 +141,27 @@ class MainWindow(QMainWindow):
         self.bufferSize.setObjectName("bufferSize")
 
         self.horLaySetADC.addWidget(self.bufferSize)
+
+        self.checkMedianFilter = QCheckBox(self.mainFrame)
+        self.checkMedianFilter.setObjectName(u"checkMedianFilter")
+        self.horLaySetADC.addWidget(self.checkMedianFilter)
+
+        self.labelMedianWindow = QLabel(self.mainFrame)
+        self.labelMedianWindow.setObjectName(u"labelMedianWindow")
+        self.horLaySetADC.addWidget(self.labelMedianWindow)
+
+        self.spinMedianWindow = QSpinBox(self.mainFrame)
+        self.spinMedianWindow.setObjectName(u"spinMedianWindow")
+        self.spinMedianWindow.setMinimum(3)
+        self.spinMedianWindow.setMaximum(11) # Corresponds to MAX_MEDIAN_FILTER_WINDOW_SIZE
+        self.spinMedianWindow.setSingleStep(2) # To keep it odd
+        self.spinMedianWindow.setValue(3) # Default
+        self.horLaySetADC.addWidget(self.spinMedianWindow)
+
+        # Initially disable window spinbox if filter is off
+        self.labelMedianWindow.setEnabled(False)
+        self.spinMedianWindow.setEnabled(False)
+
 
         self.verticalLayout.addLayout(self.horLaySetADC)
 
@@ -466,6 +488,10 @@ class MainWindow(QMainWindow):
         self.buttonEnableFeedback.clicked.connect(
             lambda: self.fgdos.enable_feedback(self.spinVref.value())
         )
+        self.buttonDisableFeedback.clicked.connect(lambda: self.fgdos.disable_feedback())
+
+        self.checkMedianFilter.stateChanged.connect(self.handle_median_filter_toggle)
+        self.spinMedianWindow.valueChanged.connect(self.handle_median_window_changed)
         # self.spinSensor.valueChanged.connect(self.fgdos.set_voltage())
 
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -475,6 +501,20 @@ class MainWindow(QMainWindow):
         self.load_settings()
         self.timer = QTimer()
         self.timerPlot = QTimer()
+
+    def handle_median_filter_toggle(self, state):
+        is_enabled = bool(state)
+        if self.fgdos:
+            self.fgdos.set_median_filter_enabled(is_enabled)
+        self.labelMedianWindow.setEnabled(is_enabled)
+        self.spinMedianWindow.setEnabled(is_enabled)
+
+    def handle_median_window_changed(self, value):
+        if self.fgdos:
+            # Ensure value is odd, though spinbox steps should handle this
+            if value % 2 == 0: # Should not happen with step 2 and min 3
+                value = max(3, value -1) # Adjust to nearest lower odd
+            self.fgdos.set_median_filter_window_size(value)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -493,6 +533,12 @@ class MainWindow(QMainWindow):
         )
         self.sampleTime.setText(QCoreApplication.translate("MainWindow", "100", None))
         self.bufferSize.setText(QCoreApplication.translate("MainWindow", "5", None))
+        self.checkMedianFilter.setText(QCoreApplication.translate("MainWindow", u"Median Filter", None))
+        self.labelMedianWindow.setText(QCoreApplication.translate("MainWindow", u"Window:", None))
+        self.spinMedianWindow.setSuffix(QCoreApplication.translate("MainWindow", u" samples", None))
+
+
+
         self.resetSensor.setText(_translate("MainWindow", "Reset Sensor"))
         self.chargeSensor.setText(_translate("MainWindow", "Auto-Charge Sensor"))
         self.buttonSetMetalShieldBias.setText(_translate("MainWindow", "Metal Shield Bias"))

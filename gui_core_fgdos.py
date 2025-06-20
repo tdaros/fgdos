@@ -190,6 +190,8 @@ def save_settings(self):
         f.write(f"datalogSensor5={self.listSensorsToDatalog.item(5).isSelected()}\n")
         f.write(f"datalogSensor6={self.listSensorsToDatalog.item(6).isSelected()}\n")
         f.write(f"fileName={self.lineNameToDatalog.text()}\n")
+        f.write(f"medianFilterEnabled={self.checkMedianFilter.isChecked()}\n")
+        f.write(f"medianFilterWindow={self.spinMedianWindow.value()}\n")
     print("Saved settings sucessfully!")
 
 
@@ -228,6 +230,12 @@ def load_settings(self):
                     self.listSensorsToDatalog.item(6).setSelected(value == "True")
                 elif key == "fileName":
                     self.lineNameToDatalog.setText(value)
+                elif key == "medianFilterEnabled":
+                    is_checked = value == "True"
+                    self.checkMedianFilter.setChecked(is_checked)
+                    # self.handle_median_filter_toggle(Qt.Checked if is_checked else Qt.Unchecked) # Ensure state propagates
+                elif key == "medianFilterWindow":
+                    self.spinMedianWindow.setValue(int(value))
         print("Loaded settings!")
     except FileNotFoundError:
         print("Settings file not found. Using default settings.")
