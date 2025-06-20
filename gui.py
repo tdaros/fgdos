@@ -1,7 +1,28 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QTimer, QCoreApplication, QSize, Qt, QRect
-from PyQt5.QtWidgets import QMainWindow, QAction, QLabel, QPushButton, QRadioButton, QSpacerItem, QSizePolicy, QDoubleSpinBox, QSpinBox, QVBoxLayout, QHBoxLayout, QGridLayout, QMenuBar, QStatusBar, QMenu, QLineEdit, QProgressBar, QListWidget, QListWidgetItem, QAbstractItemView, QListView
-#from PyQt5.QtGui import 
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QAction,
+    QLabel,
+    QPushButton,
+    QRadioButton,
+    QSpacerItem,
+    QSizePolicy,
+    QDoubleSpinBox,
+    QSpinBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QMenuBar,
+    QStatusBar,
+    QMenu,
+    QLineEdit,
+    QProgressBar,
+    QListWidget,
+    QListWidgetItem,
+    QAbstractItemView,
+    QListView,
+)
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -11,17 +32,16 @@ from dataLogger import dataLogger
 
 # import pyqtgraph as pg
 # from dvg_pyqtgraph_threadsafe import BufferedPlotCurve
-
-
 SERIAL_PORT = "COM5"
 
-class MainWindow(QMainWindow):
 
+class MainWindow(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.setupUi()
         self.measurement_running = False
         self.app = app
+
     from gui_core_fgdos import (
         populate_serial_ports,
         set_plot,
@@ -83,20 +103,20 @@ class MainWindow(QMainWindow):
         self.radioSMU = QRadioButton(self.mainFrame)
         self.radioSMU.setObjectName(u"radioSMU")
         self.radioSMU.setCheckable(True)
-        self.radioSMU.setVisible(False) ############################ HIDE RADIO SMU
+        self.radioSMU.setVisible(False)  ############################ HIDE RADIO SMU
 
         self.horLaySetADC.addWidget(self.radioSMU)
 
         self.labelNPLC = QLabel(self.mainFrame)
         self.labelNPLC.setObjectName(u"labelNPLC")
-        self.labelNPLC.setVisible(False) ############################ HIDE LABEL NPLC
+        self.labelNPLC.setVisible(False)  ############################ HIDE LABEL NPLC
 
         self.horLaySetADC.addWidget(self.labelNPLC)
 
         self.lineNPLC = QLineEdit(self.mainFrame)
         self.lineNPLC.setObjectName(u"lineNPLC")
         self.lineNPLC.setMaximumSize(QSize(40, 16777215))
-        self.lineNPLC.setVisible(False) ############################ HIDE LINE NPLC
+        self.lineNPLC.setVisible(False)  ############################ HIDE LINE NPLC
 
         self.horLaySetADC.addWidget(self.lineNPLC)
 
@@ -104,7 +124,6 @@ class MainWindow(QMainWindow):
         self.horizontalSpacerPlot = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horLaySetADC.addItem(self.horizontalSpacerPlot)
-
 
         self.labelSamplePeriod = QLabel(self.mainFrame)
         self.labelSamplePeriod.setObjectName("labelSamplePeriod")
@@ -234,11 +253,10 @@ class MainWindow(QMainWindow):
         
         # self.verticalLayout.addWidget(self.canvas)
 
-
         self.horLaSetLED = QtWidgets.QHBoxLayout()
         self.horLaSetLED.setObjectName("horLaSetLED")
         self.resetSensor = QtWidgets.QPushButton(self.mainFrame)
-
+        
 
         self.resetSensor.setObjectName("resetSensor")
         self.horLaSetLED.addWidget(self.resetSensor)
@@ -250,8 +268,8 @@ class MainWindow(QMainWindow):
         self.targetVoltage.setMinimum(0.300000000000000)
         self.targetVoltage.setMaximum(3.000000000000000)
         self.targetVoltage.setSingleStep(0.100000000000000)
-        self.targetVoltage.setValue(2.800000000000000)    
-        self.horLaSetLED.addWidget(self.targetVoltage)   
+        self.targetVoltage.setValue(2.800000000000000)
+        self.horLaSetLED.addWidget(self.targetVoltage)
 
         self.chargeSensor = QtWidgets.QPushButton(self.mainFrame)
         self.chargeSensor.setObjectName("chargeSensor")
@@ -261,7 +279,6 @@ class MainWindow(QMainWindow):
         self.horLaySerial = QtWidgets.QHBoxLayout()
         self.horLaySerial.setObjectName("horLaySerial")
         self.buttonSetMetalShieldBias = QtWidgets.QPushButton(self.mainFrame)
-
 
         self.buttonSetMetalShieldBias.setObjectName("buttonSetMetalShieldBias")
         self.horLaySerial.addWidget(self.buttonSetMetalShieldBias)
@@ -275,9 +292,8 @@ class MainWindow(QMainWindow):
         self.spinMetalShieldBias.setSingleStep(0.100000000000000)
         self.spinMetalShieldBias.setValue(0.000000000000000)
         self.horLaySerial.addWidget(self.spinMetalShieldBias)
-        #self.comboBoxSerialPort = QtWidgets.QComboBox(self.mainFrame)
-
-
+        # self.comboBoxSerialPort = QtWidgets.QComboBox(self.mainFrame)
+        
         #self.comboBoxSerialPort.setObjectName("comboBoxSerialPort")
         #self.horLaySerial.addWidget(self.comboBoxSerialPort)
         self.buttonChargeAll = QtWidgets.QPushButton(self.mainFrame)
@@ -314,11 +330,11 @@ class MainWindow(QMainWindow):
         QListWidgetItem(self.listSensorsToDatalog)
         self.listSensorsToDatalog.setObjectName(u"listSensorsToDatalog")
         self.listSensorsToDatalog.setMaximumSize(QSize(180, 24))
-        #self.listSensorsToDatalog.setAlternatingRowColors(False)
+        # self.listSensorsToDatalog.setAlternatingRowColors(False)
         self.listSensorsToDatalog.setSelectionMode(QAbstractItemView.MultiSelection)
         self.listSensorsToDatalog.setFlow(QListView.LeftToRight)
-        #self.listSensorsToDatalog.setSelectionRectVisible(False)
-        #self.listSensorsToDatalog.setSortingEnabled(False)
+        # self.listSensorsToDatalog.setSelectionRectVisible(False)
+        # self.listSensorsToDatalog.setSortingEnabled(False)
         self.horizontalDatalog.addWidget(self.listSensorsToDatalog)
         self.labelDatalogging = QLabel(self.mainFrame)
         self.labelDatalogging.setObjectName(u"labelDatalogging")
@@ -371,23 +387,28 @@ class MainWindow(QMainWindow):
         self.statusbar = QStatusBar(self)
         self.statusbar.setObjectName("statusbar")
         self.setStatusBar(self.statusbar)
-    
+        
         try:
-            self.fgdos = fgdosProcedure(device=SERIAL_PORT, spinbox_sensor=self.spinSensor, spinbox_metalshield=self.spinMetalShieldBias, update_plot=self.update_plot, update_gui=app.processEvents)
+            self.fgdos = fgdosProcedure(
+                device=SERIAL_PORT,
+                spinbox_sensor=self.spinSensor,
+                spinbox_metalshield=self.spinMetalShieldBias,
+                update_plot=self.update_plot,
+                update_gui=app.processEvents,
+            )
             self.fgdos.set_enable_output(1)
         except:
             self.fgdos = None
             print("RP2040 not connected")
 
-        self.logger = dataLogger(mode='adp',
-                                 pauseButton=self.buttonDatalogPause,
-                                 progressBarDatalog=self.progressBarDatalog, 
-                                 sensor_list=self.listSensorsToDatalog, 
-                                 fgdos=self.fgdos, 
-                                 filename_prefix = self.lineNameToDatalog)
-        
-
-
+        self.logger = dataLogger(
+            mode="adp",
+            pauseButton=self.buttonDatalogPause,
+            progressBarDatalog=self.progressBarDatalog,
+            sensor_list=self.listSensorsToDatalog,
+            fgdos=self.fgdos,
+            filename_prefix=self.lineNameToDatalog,
+        )
 
         self.menubar.addAction(self.menuFile.menuAction())
         self.menuFile.addAction(self.actionSave)
@@ -395,8 +416,12 @@ class MainWindow(QMainWindow):
 
         self.retranslateUi(self)
         self.buttonChargeAll.clicked.connect(lambda: self.fgdos.auto_charge_all())  # type: ignore
-        self.buttonSetMetalShieldBias.clicked.connect(lambda: self.fgdos.setup_shield_bias(self.spinMetalShieldBias.value()))
-        self.resetSensor.clicked.connect(lambda: self.fgdos.reset_sensor(self.spinSensor.value()))
+        self.buttonSetMetalShieldBias.clicked.connect(
+            lambda: self.fgdos.setup_shield_bias(self.spinMetalShieldBias.value())
+        )
+        self.resetSensor.clicked.connect(
+            lambda: self.fgdos.reset_sensor(self.spinSensor.value())
+        )
         self.chargeSensor.clicked.connect(lambda: self.fgdos.auto_charge(self.spinSensor.value(),self.targetVoltage.value()))
         self.setPlotOn.clicked.connect(self.set_plot)
         self.setPlotOff.clicked.connect(self.unset_plot)
@@ -416,20 +441,32 @@ class MainWindow(QMainWindow):
             lambda: self.fgdos.set_enable_input(0)
         )
 
-        self.buttonCharge.clicked.connect(lambda: self.fgdos.setup_charge(self.spinSensor.value(), "in", self.spinChargeVoltage.value()))
-        self.buttonDischarge.clicked.connect(lambda: self.fgdos.setup_charge(self.spinSensor.value(), "out", self.spinDischargeVoltage.value()))
-       
-        
+        self.buttonCharge.clicked.connect(
+            lambda: self.fgdos.setup_charge(
+                self.spinSensor.value(), "in", self.spinChargeVoltage.value()
+            )
+        )
+        self.buttonDischarge.clicked.connect(
+            lambda: self.fgdos.setup_charge(
+                self.spinSensor.value(), "out", self.spinDischargeVoltage.value()
+            )
+        )
+
         self.buttonDatalogOn.clicked.connect(lambda: self.logger.start_log_data())
         self.buttonDatalogPause.clicked.connect(lambda: self.logger.toggle_log_data())
         self.buttonDatalogOff.clicked.connect(lambda: self.logger.stop_log_data())
 
-        self.buttonPositivePulse.clicked.connect(lambda: self.fgdos.positive_pulse(self.spinSensor.value(),self.spinChargeVoltage.value()))
-        self.buttonNegativePulse.clicked.connect(lambda: self.fgdos.negative_pulse(self.spinSensor.value(),self.spinDischargeVoltage.value()))
+        self.buttonPositivePulse.clicked.connect(
+            lambda: self.fgdos.positive_pulse(self.spinSensor.value(), self.spinChargeVoltage.value())
+        )
+        self.buttonNegativePulse.clicked.connect(
+            lambda: self.fgdos.negative_pulse(self.spinSensor.value(), self.spinDischargeVoltage.value())
+        )
         
-        self.buttonEnableFeedback.clicked.connect(lambda: self.fgdos.enable_feedback(self.spinVref.value()))
-        #self.spinSensor.valueChanged.connect(self.fgdos.set_voltage())
-
+        self.buttonEnableFeedback.clicked.connect(
+            lambda: self.fgdos.enable_feedback(self.spinVref.value())
+        )
+        # self.spinSensor.valueChanged.connect(self.fgdos.set_voltage())
 
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -438,8 +475,6 @@ class MainWindow(QMainWindow):
         self.load_settings()
         self.timer = QTimer()
         self.timerPlot = QTimer()
-
-
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -499,32 +534,41 @@ class MainWindow(QMainWindow):
         self.buttonDisableWriting.setText(
             QCoreApplication.translate("MainWindow", "Disable Writing", None)
         )
-        
-        self.labelSensorsToDatalog.setText(QCoreApplication.translate("MainWindow", u"Sensor:", None))
+
+        self.labelSensorsToDatalog.setText(
+            QCoreApplication.translate("MainWindow", u"Sensor:", None)
+        )
 
         ___qlistwidgetitem = self.listSensorsToDatalog.item(0)
-        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"0", None));
+        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"0", None))
         ___qlistwidgetitem1 = self.listSensorsToDatalog.item(1)
-        ___qlistwidgetitem1.setText(QCoreApplication.translate("MainWindow", u"1", None));
+        ___qlistwidgetitem1.setText(QCoreApplication.translate("MainWindow", u"1", None))
         ___qlistwidgetitem2 = self.listSensorsToDatalog.item(2)
-        ___qlistwidgetitem2.setText(QCoreApplication.translate("MainWindow", u"2", None));
+        ___qlistwidgetitem2.setText(QCoreApplication.translate("MainWindow", u"2", None))
         ___qlistwidgetitem3 = self.listSensorsToDatalog.item(3)
-        ___qlistwidgetitem3.setText(QCoreApplication.translate("MainWindow", u"3", None));
+        ___qlistwidgetitem3.setText(QCoreApplication.translate("MainWindow", u"3", None))
         ___qlistwidgetitem4 = self.listSensorsToDatalog.item(4)
-        ___qlistwidgetitem4.setText(QCoreApplication.translate("MainWindow", u"4", None));
+        ___qlistwidgetitem4.setText(QCoreApplication.translate("MainWindow", u"4", None))
         ___qlistwidgetitem5 = self.listSensorsToDatalog.item(5)
-        ___qlistwidgetitem5.setText(QCoreApplication.translate("MainWindow", u"5", None));
+        ___qlistwidgetitem5.setText(QCoreApplication.translate("MainWindow", u"5", None))
         ___qlistwidgetitem6 = self.listSensorsToDatalog.item(6)
-        ___qlistwidgetitem6.setText(QCoreApplication.translate("MainWindow", u"6", None));
-        
+        ___qlistwidgetitem6.setText(QCoreApplication.translate("MainWindow", u"6", None))
 
-        self.labelDatalogging.setText(QCoreApplication.translate("MainWindow", u"Datalogging:", None))
+        self.labelDatalogging.setText(
+            QCoreApplication.translate("MainWindow", u"Datalogging:", None)
+        )
         self.buttonDatalogOn.setText(QCoreApplication.translate("MainWindow", u"New", None))
-        self.buttonDatalogPause.setText(QCoreApplication.translate("MainWindow", u"Pause", None))
-        self.buttonDatalogOff.setText(QCoreApplication.translate("MainWindow", u"Disable", None))
+        self.buttonDatalogPause.setText(
+            QCoreApplication.translate("MainWindow", u"Pause", None)
+        )
+        self.buttonDatalogOff.setText(
+            QCoreApplication.translate("MainWindow", u"Disable", None)
+        )
         self.progressBarDatalog.setValue(0)
 
-        self.buttonEnableFeedback.setText(QCoreApplication.translate("MainWindow", u"Enable Feedback", None))
+        self.buttonEnableFeedback.setText(
+            QCoreApplication.translate("MainWindow", u"Enable Feedback", None)
+        )
         self.labelVref.setText(QCoreApplication.translate("MainWindow", u"Vref:", None))
         self.spinVref.setSuffix(QCoreApplication.translate("MainWindow", u"V", None))
         self.buttonDisableFeedback.setText(QCoreApplication.translate("MainWindow", u"Disable Feedback", None))
@@ -533,13 +577,9 @@ class MainWindow(QMainWindow):
         self.labelNameToDatalog.setText(QCoreApplication.translate("MainWindow", u"File Name:", None))
         self.lineNameToDatalog.setText(QCoreApplication.translate("MainWindow", u"", None))
 
-        
-        
-
-
     def closeEvent(self, event):
         self.save_settings()  # Call the save_settings() method on the Ui_MainWindow instance
-        #self.send_message(b"set_adc off\n")
+        # self.send_message(b"set_adc off\n")
 
         # quit_msg = "Are you sure you want to exit the program?"
         # reply = QMessageBox.question(self, 'Message',
@@ -550,20 +590,12 @@ class MainWindow(QMainWindow):
         # else:
         #     event.ignore()
 
-    
-
-    
-
 
 if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = MainWindow(app)
-
-    # mainWindow.curve.extendData([0, 2, 3, 4, 5], [10, 20, 30, 20, 10])
-
-    # mainWindow.curve.update()
 
     mainWindow.show()
     sys.exit(app.exec_())
