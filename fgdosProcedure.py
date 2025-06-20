@@ -214,7 +214,7 @@ class fgdosProcedure(fgdosInterface):
             current_shield_bias_voltage = self.spinbox_metalshield.value()
         if current_shield_bias_voltage is not None:
             self.setup_shield_bias(current_shield_bias_voltage)
-            # time.sleep(0.01) # Optional: delay for shield bias to settle
+            time.sleep(0.001) # Optional: delay for shield bias to settle
 
         while measurement > target_voltage + tolerance:
             self.setup_charge(sensor, "out", discharge_voltage)
@@ -225,7 +225,7 @@ class fgdosProcedure(fgdosInterface):
                 self.setup_shield_bias(current_shield_bias_voltage)
                 time.sleep(0.01) # Optional: delay for shield bias to settle
             measurement = self.get_average_measurement(n_samples_mean)
-            print("Measurement: {:.3f}".format(round(measurement, 3)), "Discharge Voltage:", discharge_voltage, "Pulses:", pulses)
+            print("Measurement: {:.4f}".format(round(measurement, 4)), "Discharge Voltage:", discharge_voltage, "Pulses:", pulses)
             if pulses > 4:
                 discharge_voltage = discharge_voltage - 0.025
                 pulses = 0
@@ -240,12 +240,13 @@ class fgdosProcedure(fgdosInterface):
                 self.setup_shield_bias(current_shield_bias_voltage)
                 time.sleep(0.01) # Optional: delay for shield bias to settle
             measurement = self.get_average_measurement(n_samples_mean)
-            print("Measurement: {:.3f}".format(round(measurement, 3)), "Charge Voltage:", charge_voltage, "Pulses:", pulses)
+            print("Measurement: {:.4f}".format(round(measurement, 4)), "Charge Voltage:", charge_voltage, "Pulses:", pulses)
             if pulses > 4:
                 charge_voltage = charge_voltage + 0.025
                 pulses = 0
             if charge_voltage > charge_voltage + 0.5:
                 break
+            
     # def charge(self):
     
     # def discharge(self):

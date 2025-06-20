@@ -478,12 +478,12 @@ class MainWindow(QMainWindow):
             )
         )
 
-        self.buttonDatalogOn.clicked.connect(lambda: self.logger.start_log_data())
+        self.buttonDatalogOn.clicked.connect(self.start_datalogging_sequence)
         self.buttonDatalogPause.clicked.connect(lambda: self.logger.toggle_log_data())
-        self.buttonDatalogOff.clicked.connect(lambda: self.logger.stop_log_data())
+        self.buttonDatalogOff.clicked.connect(self.stop_datalogging_sequence)
 
         self.buttonPositivePulse.clicked.connect(
-            lambda: self.fgdos.positive_pulse(self.spinSensor.value(), self.spinChargeVoltage.value())
+            lambda: self.fgdos.positive_pulse(self.spinSensor.value(), self.spinChargeVoltage.value()) # type: ignore
         )
         self.buttonNegativePulse.clicked.connect(
             lambda: self.fgdos.negative_pulse(self.spinSensor.value(), self.spinDischargeVoltage.value())
@@ -505,25 +505,63 @@ class MainWindow(QMainWindow):
         #self.serial_port = QSerialPort()
         #self.populate_serial_ports()
         self.load_settings()
+        self._update_median_filter_ui_state() # Ensure UI is correct after loading settings
         self.timer = QTimer()
         self.timerPlot = QTimer()
+
+    def _update_median_filter_ui_state(self):
+        """ Helper function to correctly set the enabled state of median filter UI elements. """
+        ad_enabled_for_plot = self.checkAnalogDiscovery.isChecked()
+        median_filter_itself_checked = self.checkMedianFilter.isChecked()
+
+        if ad_enabled_for_plot:
+            # Analog Discovery is used for plotting, median filter is not applicable
+            self.labelMedianWindow.setEnabled(False)
+            self.spinMedianWindow.setEnabled(False)
+        else:
+            # Internal ADC is used for plotting, median filter UI depends on its own checkbox
+            self.labelMedianWindow.setEnabled(median_filter_itself_checked)
+            self.spinMedianWindow.setEnabled(median_filter_itself_checked)
 
     def handle_median_filter_toggle(self, state):
         is_enabled = bool(state)
         if self.fgdos:
             self.fgdos.set_median_filter_enabled(is_enabled)
-        self.labelMedianWindow.setEnabled(is_enabled)
-        self.spinMedianWindow.setEnabled(is_enabled)
+        self._update_median_filter_ui_state()
 
     def handle_analog_discovery_toggle(self, state):
         is_enabled = bool(state)
         if self.fgdos:
             self.fgdos.set_use_analog_discovery(is_enabled)
-            # Optional: Provide feedback to the user
             status_msg = "Analog Discovery measurement enabled" if is_enabled else "Internal ADC measurement enabled"
             self.statusbar.showMessage(status_msg)
             self.timer.singleShot(3000, self.clear_message) # Clear message after 3 seconds
-        self.spinMedianWindow.setEnabled(is_enabled)
+        self._update_median_filter_ui_state()
+
+    def start_datalogging_sequence(self):
+        """ Handles actions when the 'Datalog On' button is clicked. """
+        # If Analog Discovery is checked for plotting, uncheck and disable it for the GUI plot.
+        # This will trigger handle_analog_discovery_toggle, which updates fgdos and UI.
+        if self.checkAnalogDiscovery.isChecked():
+            self.checkAnalogDiscovery.setChecked(False)
+
+        # Disable the Analog Discovery checkbox during datalogging.
+        self.checkAnalogDiscovery.setEnabled(False)
+
+        # Start the logger (which might use AD independently for its own measurements)
+        self.logger.start_log_data()
+
+    def stop_datalogging_sequence(self):
+        """ Handles actions when the 'Datalog Off' button is clicked. """
+        # Stop the logger
+        self.logger.stop_log_data()
+
+        # Re-enable the Analog Discovery checkbox.
+        # The user can then choose to use it again for plotting.
+        self.checkAnalogDiscovery.setEnabled(True)
+        
+        # Ensure median filter UI is updated based on current checkbox states
+        self._update_median_filter_ui_state()
 
     def handle_median_window_changed(self, value):
         if self.fgdos:
