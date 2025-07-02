@@ -8,17 +8,28 @@ OFFSET_CORRECTION = -0.012
 
 class analogDiscoveryProcedure:
     def __init__(self):
+        """
+        Initializes the procedure.
+        'total_samples_processed' will track the number of samples (ticks) for precise timing.
+        'acquisition_frequency' will store the actual frequency set on the device.
+        """
         #print DWF version
         self.smu = None
+        self.total_samples_processed = 0
+        self.acquisition_frequency = 0
         #print("DWF Version: " + dwf.FDwfGetVersion())
 
     def connect_smu(self):
+        """Creates and returns a DwfAnalogIn object."""
         # Create a PyVISA resource manager
         smu = dwf.DwfAnalogIn()
         return smu
     
     def setup_smu(self):
-
+        """
+        Connects and configures the Analog Discovery for record-mode acquisition.
+        The actual sampling frequency is retrieved and stored for precise time calculations.
+        """
         if self.smu == None:
             self.smu = self.connect_smu()
         self.smu.channelEnableSet(0, True)
@@ -26,9 +37,16 @@ class analogDiscoveryProcedure:
 
         self.smu.acquisitionModeSet(self.smu.ACQMODE.RECORD)
         self.smu.frequencySet(HZ_ACQ)
-        self.smu.recordLengthSet(N_SAMPLES / HZ_ACQ)
+        
+        # Get the actual frequency from the device for accurate timing
+        self.acquisition_frequency = self.smu.frequencyGet()
+        
+        self.smu.recordLengthSet(N_SAMPLES / self.acquisition_frequency)
+        
+        # Reset the sample counter at the beginning of a new setup
+        self.total_samples_processed = 0
+        
         time.sleep(2) ## for offset stabilization
-        self.time_measurement_offset = time.time()
         #print("AD2 Setup done.")
 
         
@@ -37,6 +55,11 @@ class analogDiscoveryProcedure:
     #     self.smu.smua.source.output = self.smu.smua.OUTPUT_ON
 
     def measure_voltage(self):
+        """
+        Performs a voltage measurement, acquiring a block of samples.
+        The timestamp is now calculated precisely using the sample count (ticks) and the device's internal clock frequency,
+        representing the time at the center of the acquired data block.
+        """
         try:
             rgdSamples = []
             cSamples = 0
@@ -70,6 +93,11 @@ class analogDiscoveryProcedure:
                 # get samples
                 rgdSamples.extend(self.smu.statusData(0, cAvailable))
                 cSamples += cAvailable
+
+            if not rgdSamples:
+                print("Measurement failed: No samples were acquired.")
+                return None, None
+                
             #print("Recording finished")
             # if fLost:
             #     print("LOST!")
@@ -78,13 +106,25 @@ class analogDiscoveryProcedure:
             #     print("CORRUPTED!")
             #     raise Exception("Samples could be corrupted! Reduce frequency")
             #print("Samples left: " + str(self.smu.statusSamplesLeft()))
+            
             voltage_measurement = sum(rgdSamples) / len(rgdSamples)
-            time_measurement = time.time() - self.time_measurement_offset
+
+            # --- Precise Time Calculation using Ticks ---
+            # Calculate a timestamp for the center of the current data block.
+            block_center_sample_index = self.total_samples_processed + (len(rgdSamples) / 2.0)
+            time_measurement = block_center_sample_index / self.acquisition_frequency
+
+            # Update the total number of processed samples for the next measurement.
+            self.total_samples_processed += len(rgdSamples)
+            
             return float(voltage_measurement) + OFFSET_CORRECTION, float(time_measurement)
-        except:
-            print("Error in measurement. Returning Nil.")
+        except dwf.DWFError as e:
+            print(f"Error in measurement: {e}. Returning Nil.")
             return None, None
-    
+        except Exception as e:
+            print(f"An unexpected error occurred in measurement: {e}. Returning Nil.")
+            return None, None
+
     def close_smu(self):
         self.smu.reset()
         pass
