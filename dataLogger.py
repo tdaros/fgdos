@@ -101,18 +101,25 @@ class dataLogger:
             os.makedirs('./datalog')
 
         # Find the highest existing file number
-        self.filename_prefix = self.filename_prefix.text()
+        filename_prefix_text = self.filename_prefix.text()
         existing_files = os.listdir('./datalog')
-        print('Filename Prefix:' + self.filename_prefix)
-        existing_files = [file for file in existing_files if file.startswith(self.filename_prefix) and file.endswith('.csv')]
-        existing_numbers = [int(file[len(self.filename_prefix):-4]) for file in existing_files]
+        print('Filename Prefix:' + filename_prefix_text)
+        matching_files = [file for file in existing_files if file.startswith(filename_prefix_text) and file.endswith('.csv')]
+
+        existing_numbers = []
+        for file in matching_files:
+            try:
+                number_part = file[len(filename_prefix_text):-4]
+                existing_numbers.append(int(number_part))
+            except ValueError:
+                print(f"Warning: Skipping file with non-numeric component: {file}")
         if existing_numbers:
             max_number = max(existing_numbers)
         else:
             max_number = 0
 
         # Create a new file with an incremental name
-        self.filename = f'./datalog/'+self.filename_prefix+f'{max_number + 1:04d}.csv'
+        self.filename = f'./datalog/'+filename_prefix_text+f'{max_number + 1:04d}.csv'
 
         # Write the header and data to the file
         with open(self.filename, 'w', newline='') as file:
