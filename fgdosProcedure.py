@@ -229,9 +229,14 @@ class fgdosProcedure(fgdosInterface):
             if pulses > 4:
                 discharge_voltage = discharge_voltage - 0.025
                 pulses = 0
-            if discharge_voltage < discharge_voltage - 0.5:
+            if discharge_voltage < MIN_VINJ:
+                print(f"Warning: Discharge voltage reached minimum limit of {MIN_VINJ}V. Stopping discharge.")
                 break
+                
         while measurement < target_voltage - tolerance:
+            if charge_voltage > MAX_VINJ:
+                print(f"Error: Charge voltage would exceed MAX_VINJ of {MAX_VINJ}V. Stopping auto-charge.")
+                break
             self.setup_charge(sensor, "in", charge_voltage)
             self.set_enable_input(1)
             self.set_enable_input(0)
@@ -244,8 +249,6 @@ class fgdosProcedure(fgdosInterface):
             if pulses > 4:
                 charge_voltage = charge_voltage + 0.025
                 pulses = 0
-            if charge_voltage > charge_voltage + 0.5:
-                break
             
     # def charge(self):
     
