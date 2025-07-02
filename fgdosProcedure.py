@@ -232,11 +232,17 @@ class fgdosProcedure(fgdosInterface):
             if discharge_voltage < MIN_VINJ:
                 print(f"Warning: Discharge voltage reached minimum limit of {MIN_VINJ}V. Stopping discharge.")
                 break
-                
+        
+        pulses = 0
+        measurement_at_start_of_pulse_cycle = 0
         while measurement < target_voltage - tolerance:
             if charge_voltage > MAX_VINJ:
                 print(f"Error: Charge voltage would exceed MAX_VINJ of {MAX_VINJ}V. Stopping auto-charge.")
                 break
+            
+            if pulses == 0:
+                measurement_at_start_of_pulse_cycle = measurement
+
             self.setup_charge(sensor, "in", charge_voltage)
             self.set_enable_input(1)
             self.set_enable_input(0)
@@ -247,6 +253,9 @@ class fgdosProcedure(fgdosInterface):
             measurement = self.get_average_measurement(n_samples_mean)
             print("Measurement: {:.4f}".format(round(measurement, 4)), "Charge Voltage:", charge_voltage, "Pulses:", pulses)
             if pulses > 4:
+                if measurement <= measurement_at_start_of_pulse_cycle:
+                    print("Measurement has not increased after 5 pulses. Stopping charge.")
+                    break
                 charge_voltage = charge_voltage + 0.025
                 pulses = 0
             
@@ -305,6 +314,7 @@ class fgdosProcedure(fgdosInterface):
 
     # Add a close method to clean up AD2 if it was initialized
     def close(self):
+        super().close() # Call the close method of the parent class (fgdosInterface)
         if self.adp is not None:
             try:
                 self.adp.close_smu()
