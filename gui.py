@@ -42,6 +42,13 @@ class MainWindow(QMainWindow):
         self.setupUi()
         self.measurement_running = False
         self.app = app
+        self.fgdos = None  # Start with no connection
+
+        self.connection_timer = QTimer(self)
+        self.connection_timer.timeout.connect(self.check_connection)
+        self.connection_timer.start(1000)  # Check every second
+        self.check_connection()  # Initial check
+
 
     from gui_core_fgdos import (
         populate_serial_ports,
@@ -54,6 +61,46 @@ class MainWindow(QMainWindow):
         set_sensor,
         clear_message,
     )
+
+    def set_ui_enabled(self, enabled):
+        """Enable or disable the main UI elements."""
+        self.mainFrame.setEnabled(enabled)
+
+    def check_connection(self):
+        """Check for device connection and update UI accordingly."""
+        if self.fgdos is None:
+            try:
+                self.fgdos = fgdosProcedure(
+                    device=SERIAL_PORT,
+                    spinbox_sensor=self.spinSensor,
+                    spinbox_metalshield=self.spinMetalShieldBias,
+                    update_plot=self.update_plot,
+                    update_gui=self.app.processEvents,
+                )
+                if self.logger:
+                    self.logger.fgdos = self.fgdos  # Update logger with the new fgdos object
+                self.set_ui_enabled(True)
+                self.statusbar.showMessage("Device connected")
+                print("RP2040 connected")
+            except Exception:
+                self.fgdos = None
+                if self.logger:
+                    self.logger.fgdos = None
+                self.set_ui_enabled(False)
+                self.statusbar.showMessage("Device not connected. Retrying...")
+        else:
+            # Device was connected, check if it's still alive
+            if not self.fgdos.get_status():
+                print("RP2040 disconnected. Cleaning up...")
+                try:
+                    self.fgdos.close() # Properly close the connection
+                except Exception as e:
+                    print(f"Error during fgdos cleanup: {e}")
+                self.fgdos = None
+                if self.logger:
+                    self.logger.fgdos = None
+                self.set_ui_enabled(False)
+                self.statusbar.showMessage("Device disconnected. Retrying...")
 
     def setupUi(self):
         self.setObjectName("FGDOS GUI")
@@ -414,25 +461,14 @@ class MainWindow(QMainWindow):
         self.statusbar.setObjectName("statusbar")
         self.setStatusBar(self.statusbar)
         
-        try:
-            self.fgdos = fgdosProcedure(
-                device=SERIAL_PORT,
-                spinbox_sensor=self.spinSensor,
-                spinbox_metalshield=self.spinMetalShieldBias,
-                update_plot=self.update_plot,
-                update_gui=app.processEvents,
-            )
-            self.fgdos.set_enable_output(1)
-        except:
-            self.fgdos = None
-            print("RP2040 not connected")
+        self.fgdos = None # Start with no connection
 
         self.logger = dataLogger(
             mode="adp",
             pauseButton=self.buttonDatalogPause,
             progressBarDatalog=self.progressBarDatalog,
             sensor_list=self.listSensorsToDatalog,
-            fgdos=self.fgdos,
+            fgdos=self.fgdos, # Initially None
             filename_prefix=self.lineNameToDatalog,
         )
 
@@ -678,17 +714,10 @@ class MainWindow(QMainWindow):
         self.lineNameToDatalog.setText(QCoreApplication.translate("MainWindow", u"", None))
 
     def closeEvent(self, event):
-        self.save_settings()  # Call the save_settings() method on the Ui_MainWindow instance
-        # self.send_message(b"set_adc off\n")
-
-        # quit_msg = "Are you sure you want to exit the program?"
-        # reply = QMessageBox.question(self, 'Message',
-        #                 quit_msg, QMessageBox.Yes, QMessageBox.No)
-
-        # if reply == QMessageBox.Yes:
-        #     event.accept()
-        # else:
-        #     event.ignore()
+        self.save_settings()
+        if self.fgdos:
+            self.fgdos.close() # Properly close connection on exit
+        event.accept()
 
 
 if __name__ == "__main__":

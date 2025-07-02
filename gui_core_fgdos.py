@@ -84,7 +84,8 @@ def set_plot(self):
     self.x_values = collections.deque(maxlen=self.data_buffer_size)
     sampleTime_period = int(self.sampleTime.text())
     self.timerPlot.timeout.connect(self.update_plot)
-    self.fgdos.reset_timestamp_offset()
+    if self.fgdos:
+        self.fgdos.reset_timestamp_offset()
     self.timerPlot.start(sampleTime_period)
 
 def update_adc_measurement(self):
@@ -261,7 +262,8 @@ def load_settings(self):
 
 def set_sensor(self):
     sensor_value = self.spinSensor.value()
-    self.fgdos.output_channel_select(sensor_value)
+    if self.fgdos:
+        self.fgdos.output_channel_select(sensor_value)
     #self.fgdos.input_channel_select(sensor_value)
 
 
@@ -318,6 +320,3 @@ class RealTimeFilter:
             return np.dot(self.buffer, self.coefficients)
         elif self.filter_type == 'IIR':
             return lfilter(self.coefficients, self.denominator, self.buffer)[-1]
-        
-
-    
