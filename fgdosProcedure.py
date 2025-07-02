@@ -302,7 +302,6 @@ class fgdosProcedure(fgdosInterface):
 
     # Add a close method to clean up AD2 if it was initialized
     def close(self):
-        super().close() # Call the close method of the parent class (fgdosInterface)
         if self.adp is not None:
             try:
                 self.adp.close_smu()

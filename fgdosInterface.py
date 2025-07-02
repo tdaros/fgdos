@@ -41,12 +41,12 @@ ADC_IN = 28
 
 class fgdosInterface():
     def __init__(self, debug_mode=False, device='COM5'):
-        self.pico = None  # Initialize pico to None
         try:
             self.pico = pico.pico(device)
-        except Exception as e:
-            print(f'Interface not connected: {e}')
-            raise  # Re-raise the exception to be caught by the GUI
+        except:
+            print('Interface not connected')
+            return
+        self.pico.reset()
 
         if debug_mode:
             pico.GPIO_set_input(DEBUG_PIN)
@@ -142,20 +142,9 @@ class fgdosInterface():
         self.pico.gpio_write(CP_SHUTDOWN, state)
 
     def get_status(self):
-        # Get the status of the Pico by performing a real I/O operation
-        if self.pico is None:
-            return False
-        try:
-            self.pico.tick()  # This will fail if the device is disconnected
+        # Get the status of the Pico
+        try: 
+            self.pico.connected
             return True
-        except Exception:
+        except:
             return False
-
-    def close(self):
-        """Safely close the connection to the pico device."""
-        if self.pico:
-            try:
-                self.pico.close()
-                print("Pico interface closed.")
-            except Exception as e:
-                print(f"Error closing pico interface: {e}")
